@@ -2,6 +2,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtGui import QPixmap
 
 from frontend.Styles import BrowsifyStyles
 
@@ -89,7 +90,7 @@ class Browsify(QMainWindow):
 
         # Set window properties
         self.setGeometry(100, 100, 1024, 768)
-        self.setWindowTitle("Simple Browser")
+        self.setWindowTitle("Browsify")
 
         # Initially, show bookmarks
         self.show_bookmarks()

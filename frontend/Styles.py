@@ -20,7 +20,24 @@ class BrowsifyStyles:
                         QTabBar::tab:hover {
                             background: #e0e0e0;
                         }
-                                    
+                        
+                        QToolBar {
+                            height: 40px; /* Set the height of the toolbar */
+                        }
+
+                        QToolBar QToolButton {
+                            height: 30px; /* Set the height of the toolbar buttons */
+                            width: 30px;  /* Set the width of the toolbar buttons */
+                        }
+
+                        QToolBar QComboBox {
+                            height: 30px; /* Set the height of the combo box in the toolbar */
+                        }
+
+                        QLineEdit {
+                            height: 30px; /* Set the height of the URL input box */
+                        }
+
                         QToolBar QToolButton:hover {
                             background-color: #e0e0e0;
                         }
