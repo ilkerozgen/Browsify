@@ -1,4 +1,5 @@
 LICENSE
+README.md
 setup.py
 Browsify.egg-info/PKG-INFO
 Browsify.egg-info/SOURCES.txt

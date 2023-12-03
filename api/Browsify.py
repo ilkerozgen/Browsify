@@ -89,7 +89,7 @@ class Browsify(QMainWindow):
         self.bookmarks = {}
 
         # Set window properties
-        self.setGeometry(100, 100, 1024, 768)
+        self.setGeometry(100, 100, 1200, 800)
         self.setWindowTitle("Browsify")
 
         # Initially, show bookmarks
