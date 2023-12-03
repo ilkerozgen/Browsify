@@ -1,6 +1,11 @@
 class BrowsifyStyles:
     def __init__(self):
         self._styles = """
+            QTabWidget::pane { 
+                border: 1px solid #C4C4C3; 
+                top: -1px; 
+            }
+            
             QTabBar::tab {
                 background: #f0f0f0;
                 color: #333333;
@@ -13,6 +18,7 @@ class BrowsifyStyles:
                 font-size: 16px;
                 margin-top: 5px;
                 margin-left: 5px;
+                border-bottom: none;
             }
 
             QTabBar::close-button:hover {
@@ -29,6 +35,7 @@ class BrowsifyStyles:
             QTabBar::tab:selected {
                 background: #ffffff;
                 border: 1px solid #cccccc;
+                border-bottom: none;
             }
 
             QTabBar::tab:hover {
