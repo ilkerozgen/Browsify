@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
-from api.Browsify import Browsify
+from api.browsify import Browsify
 
 def main():
     app = QApplication(sys.argv)

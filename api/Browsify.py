@@ -4,7 +4,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
 
-from frontend.Styles import BrowsifyStyles
+from frontend.styles import BrowsifyStyles
 
 class Browsify(QMainWindow):
     def __init__(self):
@@ -98,7 +98,7 @@ class Browsify(QMainWindow):
         self.bookmarks_combo.addItem('No Bookmarks Selected')
 
         try:
-            with open("bookmarks.json", 'r') as file:
+            with open("db/bookmarks.json", 'r') as file:
                 self.bookmarks = json.load(file)
         except FileNotFoundError:
             # Handle the case where the file is not found (e.g., first run)
@@ -158,12 +158,12 @@ class Browsify(QMainWindow):
         self.current_browser().setUrl(q)
 
     # Function to save bookmarks to a JSON file
-    def save_bookmarks_to_file(self, filename='bookmarks.json'):
+    def save_bookmarks_to_file(self, filename='db/bookmarks.json'):
         with open(filename, 'w') as file:
             json.dump(self.bookmarks, file)
 
     # Function to load bookmarks from a JSON file
-    def load_bookmarks_from_file(self, filename='bookmarks.json'):
+    def load_bookmarks_from_file(self, filename='db/bookmarks.json'):
         try:
             with open(filename, 'r') as file:
                 self.bookmarks = json.load(file)

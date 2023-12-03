@@ -28,7 +28,7 @@ class BrowsifyStyles:
             QTabBar::close-button {
                 background-color: #9fa0a1;
                 margin-top: 5px;
-                border-radius: 6px;
+                border-radius: 7px;
                 image: url(visual/icons/close.png);
             }
 
