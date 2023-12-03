@@ -44,34 +44,23 @@ class Browsify(QMainWindow):
         reload_btn.triggered.connect(self.current_browser().reload)
         navbar.addAction(reload_btn)
 
+        # Stop Button
+        stop_btn = QAction(QIcon('visual/icons/stop.png'), 'Stop', self)
+        stop_btn.setStatusTip('Stop loading the current page')
+        stop_btn.triggered.connect(self.current_browser().stop)
+        navbar.addAction(stop_btn)
+
         # Home Button
         home_btn = QAction(QIcon('visual/icons/home.png'), 'Home', self)
         home_btn.setStatusTip('Go home')
         home_btn.triggered.connect(self.navigate_home)
         navbar.addAction(home_btn)
 
-        # Bookmark Button
-        bookmark_btn = QAction(QIcon('visual/icons/add.png'), 'Add Bookmark', self)
-        bookmark_btn.setStatusTip('Bookmark current page')
-        bookmark_btn.triggered.connect(self.add_bookmark)
-        navbar.addAction(bookmark_btn)
-
-        # Remove Bookmark Button
-        remove_bookmark_btn = QAction(QIcon('visual/icons/remove.png'), 'Remove Bookmark', self)
-        remove_bookmark_btn.setStatusTip('Remove selected bookmark')
-        remove_bookmark_btn.triggered.connect(self.remove_bookmark)
-        navbar.addAction(remove_bookmark_btn)
-
         # New Tab Button
         new_tab_btn = QAction(QIcon('visual/icons/newtab.png'), 'New Tab', self)
         new_tab_btn.setStatusTip('Open a new tab')
         new_tab_btn.triggered.connect(self.add_new_tab_action)
         navbar.addAction(new_tab_btn)
-
-        # Show Bookmarks ComboBox
-        self.bookmarks_combo = QComboBox()
-        self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
-        navbar.addWidget(self.bookmarks_combo)
 
         # URL Bar
         self.url_bar = QLineEdit()
@@ -84,6 +73,23 @@ class Browsify(QMainWindow):
         # Status Bar
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
+
+        # Add Bookmark Button
+        add_bookmark_btn = QAction(QIcon('visual/icons/add.png'), 'Add Bookmark', self)
+        add_bookmark_btn.setStatusTip('Bookmark current page')
+        add_bookmark_btn.triggered.connect(self.add_bookmark)
+        navbar.addAction(add_bookmark_btn)
+
+        # Remove Bookmark Button
+        remove_add_bookmark_btn = QAction(QIcon('visual/icons/remove.png'), 'Remove Bookmark', self)
+        remove_add_bookmark_btn.setStatusTip('Remove selected bookmark')
+        remove_add_bookmark_btn.triggered.connect(self.remove_bookmark)
+        navbar.addAction(remove_add_bookmark_btn)
+
+        # Show Bookmarks ComboBox
+        self.bookmarks_combo = QComboBox()
+        self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
+        navbar.addWidget(self.bookmarks_combo)
 
         # Bookmarks
         self.bookmarks = {}
