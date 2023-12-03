@@ -6,6 +6,7 @@ def main():
     app = QApplication(sys.argv)
     QApplication.setApplicationName("Browsify")
     window = Browsify()
+    window.load_bookmarks_from_file()
     window.show()
     sys.exit(app.exec_())
 

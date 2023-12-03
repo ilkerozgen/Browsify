@@ -64,6 +64,10 @@ class BrowsifyStyles:
                 margin-bottom: 3px;
                 font-size: 14px;
             }
+
+            QLineEdit:hover {
+                border: 2px solid #2196F3;
+            }
         """
 
     def getStyles(self):
