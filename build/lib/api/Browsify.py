@@ -1,10 +1,10 @@
+import json
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
-from PyQt5.QtGui import QPixmap
 
-from frontend.Styles import BrowsifyStyles
+from frontend.styles import BrowsifyStyles
 
 class Browsify(QMainWindow):
     def __init__(self):
@@ -44,23 +44,17 @@ class Browsify(QMainWindow):
         reload_btn.triggered.connect(self.current_browser().reload)
         navbar.addAction(reload_btn)
 
+        # Stop Button
+        stop_btn = QAction(QIcon('visual/icons/stop.png'), 'Stop', self)
+        stop_btn.setStatusTip('Stop loading the current page')
+        stop_btn.triggered.connect(self.current_browser().stop)
+        navbar.addAction(stop_btn)
+
         # Home Button
         home_btn = QAction(QIcon('visual/icons/home.png'), 'Home', self)
         home_btn.setStatusTip('Go home')
         home_btn.triggered.connect(self.navigate_home)
         navbar.addAction(home_btn)
-
-        # Bookmark Button
-        bookmark_btn = QAction(QIcon('visual/icons/add.png'), 'Add Bookmark', self)
-        bookmark_btn.setStatusTip('Bookmark current page')
-        bookmark_btn.triggered.connect(self.add_bookmark)
-        navbar.addAction(bookmark_btn)
-
-        # Remove Bookmark Button
-        remove_bookmark_btn = QAction(QIcon('visual/icons/remove.png'), 'Remove Bookmark', self)
-        remove_bookmark_btn.setStatusTip('Remove selected bookmark')
-        remove_bookmark_btn.triggered.connect(self.remove_bookmark)
-        navbar.addAction(remove_bookmark_btn)
 
         # New Tab Button
         new_tab_btn = QAction(QIcon('visual/icons/newtab.png'), 'New Tab', self)
@@ -68,15 +62,12 @@ class Browsify(QMainWindow):
         new_tab_btn.triggered.connect(self.add_new_tab_action)
         navbar.addAction(new_tab_btn)
 
-        # Show Bookmarks ComboBox
-        self.bookmarks_combo = QComboBox()
-        self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
-        navbar.addWidget(self.bookmarks_combo)
-
         # URL Bar
         self.url_bar = QLineEdit()
         self.url_bar.returnPressed.connect(self.navigate_to_url)
         navbar.addWidget(self.url_bar)
+        self.url_bar.mousePressEvent = self.urlbar_mousePressEvent
+        self.tabs.currentChanged.connect(self.update_urlbar_on_tab_change)
 
         # Updating URL bar
         self.current_browser().urlChanged.connect(lambda qurl: self.update_urlbar(qurl, self.current_browser()))
@@ -85,15 +76,44 @@ class Browsify(QMainWindow):
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
 
+        # Add Bookmark Button
+        add_bookmark_btn = QAction(QIcon('visual/icons/add.png'), 'Add Bookmark', self)
+        add_bookmark_btn.setStatusTip('Bookmark current page')
+        add_bookmark_btn.triggered.connect(self.add_bookmark)
+        navbar.addAction(add_bookmark_btn)
+
+        # Remove Bookmark Button
+        remove_add_bookmark_btn = QAction(QIcon('visual/icons/remove.png'), 'Remove Bookmark', self)
+        remove_add_bookmark_btn.setStatusTip('Remove selected bookmark')
+        remove_add_bookmark_btn.triggered.connect(self.remove_bookmark)
+        navbar.addAction(remove_add_bookmark_btn)
+
+        # Show Bookmarks ComboBox
+        self.bookmarks_combo = QComboBox()
+        self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
+        navbar.addWidget(self.bookmarks_combo)
+
         # Bookmarks
         self.bookmarks = {}
+        self.bookmarks_combo.addItem('No Bookmarks Selected')
+
+        try:
+            with open("db/bookmarks.json", 'r') as file:
+                self.bookmarks = json.load(file)
+        except FileNotFoundError:
+            # Handle the case where the file is not found (e.g., first run)
+            pass
 
         # Set window properties
-        self.setGeometry(100, 100, 1024, 768)
+        self.setGeometry(100, 100, 1200, 800)
         self.setWindowTitle("Browsify")
 
         # Initially, show bookmarks
         self.show_bookmarks()
+
+    # Function to select text in the URL bar when clicked
+    def urlbar_mousePressEvent(self, event):
+        self.url_bar.selectAll()
 
     # Handler for add new tab
     def add_new_tab_action(self):
@@ -137,6 +157,20 @@ class Browsify(QMainWindow):
 
         self.current_browser().setUrl(q)
 
+    # Function to save bookmarks to a JSON file
+    def save_bookmarks_to_file(self, filename='db/bookmarks.json'):
+        with open(filename, 'w') as file:
+            json.dump(self.bookmarks, file)
+
+    # Function to load bookmarks from a JSON file
+    def load_bookmarks_from_file(self, filename='db/bookmarks.json'):
+        try:
+            with open(filename, 'r') as file:
+                self.bookmarks = json.load(file)
+        except FileNotFoundError:
+            # Handle the case where the file is not found (e.g., first run)
+            pass
+
     # Function to add bookmark
     def add_bookmark(self):
         current_url = self.current_browser().url().toString()
@@ -150,6 +184,9 @@ class Browsify(QMainWindow):
                 self.bookmarks_combo.addItem(name)
                 QMessageBox.information(self, 'Bookmark Added', f'Bookmark added: {name}')
 
+             # Save bookmarks to file
+            self.save_bookmarks_to_file()
+
     # Function to remove a bookmark
     def remove_bookmark(self):
         current_index = self.bookmarks_combo.currentIndex()
@@ -162,8 +199,17 @@ class Browsify(QMainWindow):
                 del self.bookmarks[url]
                 self.bookmarks_combo.removeItem(current_index)
                 QMessageBox.information(self, 'Bookmark Removed', f'Bookmark removed: {bookmark_name}')
+
+                # Save bookmarks to file
+                self.save_bookmarks_to_file()
             else:
                 QMessageBox.warning(self, 'Error', 'Bookmark not found.')
+
+    # Function to update URL bar when the current tab changes
+    def update_urlbar_on_tab_change(self, index):
+        current_browser = self.tabs.widget(index)
+        if current_browser:
+            self.update_urlbar(current_browser.url(), current_browser)
 
     # Function to get the URL of a bookmark
     def get_url_from_bookmark_name(self, bookmark_name):
@@ -174,10 +220,7 @@ class Browsify(QMainWindow):
 
     # Function to show bookmarks
     def show_bookmarks(self):
-        if not self.bookmarks:
-            self.bookmarks_combo.addItem('No Bookmarks Selected')
-        else:
-            self.bookmarks_combo.addItems(self.bookmarks.values())
+        self.bookmarks_combo.addItems(self.bookmarks.values())
 
     # Function to navigate to the selected bookmark
     def navigate_to_bookmark(self, index):
