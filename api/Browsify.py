@@ -91,7 +91,6 @@ class Browsify(QMainWindow):
         # Show Bookmarks ComboBox
         self.bookmarks_combo = QComboBox()
         self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
-        navbar.addWidget(self.bookmarks_combo)
 
        # Sidebar
         self.sidebar = QWidget()
@@ -209,13 +208,16 @@ class Browsify(QMainWindow):
         name, ok = QInputDialog.getText(self, 'Add Bookmark', 'Enter a name for the bookmark:')
 
         if ok and name:
-            if current_url not in self.bookmarks:
-                self.bookmarks[current_url] = name
-                self.show_bookmarks()  # Update bookmarks in both combo box and sidebar
-                QMessageBox.information(self, 'Bookmark Added', f'Bookmark added: {name}')
+            if name in self.bookmarks.values():
+                QMessageBox.warning(self, 'Bookmark Exists', f'A bookmark with the name "{name}" already exists.')
+            else:
+                if current_url not in self.bookmarks:
+                    self.bookmarks[current_url] = name
+                    self.show_bookmarks()  # Update bookmarks in both combo box and sidebar
+                    QMessageBox.information(self, 'Bookmark Added', f'Bookmark added: {name}')
 
-            # Save bookmarks to file
-            self.save_bookmarks_to_file()
+                # Save bookmarks to file
+                self.save_bookmarks_to_file()
 
     def remove_bookmark(self):
         bookmark_names = list(self.bookmarks.values())
