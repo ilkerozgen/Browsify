@@ -99,8 +99,8 @@ class Browsify(QMainWindow):
         self.sidebar.setLayout(self.sidebar_layout)
 
         # Add Bookmarks Sidebar Button
-        toggle_sidebar_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'Toggle Sidebar', self)
-        toggle_sidebar_btn.setStatusTip('Toggle Bookmarks Sidebar')
+        toggle_sidebar_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'My Bookmarks', self)
+        toggle_sidebar_btn.setStatusTip('My Bookmarks')
         toggle_sidebar_btn.triggered.connect(self.toggle_sidebar)
         navbar.addAction(toggle_sidebar_btn)
 
@@ -117,8 +117,8 @@ class Browsify(QMainWindow):
         self.sidebar.hide()
 
         # Add Bookmarks Button to the navbar
-        bookmarks_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'Bookmarks', self)
-        bookmarks_btn.setStatusTip('Manage Bookmarks')
+        bookmarks_btn = QAction(QIcon('visual/icons/search.png'), 'Search Bookmarks', self)
+        bookmarks_btn.setStatusTip('Search Bookmarks')
         bookmarks_btn.triggered.connect(self.show_bookmarks_popup)
         navbar.addAction(bookmarks_btn)
 
