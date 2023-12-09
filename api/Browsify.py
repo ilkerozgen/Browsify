@@ -263,12 +263,15 @@ class Browsify(QMainWindow):
         # Add "No Bookmarks Selected" to the combo box
         self.bookmarks_combo.addItem('No Bookmarks Selected')
 
+        # Sort bookmarks by name
+        sorted_bookmarks = sorted(self.bookmarks.items(), key=lambda x: x[1])
+
         # Add bookmarks to the combo box and sidebar
-        for name in self.bookmarks.values():
+        for url, name in sorted_bookmarks:
             self.bookmarks_combo.addItem(name)
             # Also add bookmarks to the sidebar
             sidebar_label = QLabel(name)
-            sidebar_label.mousePressEvent = lambda event, url=self.get_url_from_bookmark_name(name): self.navigate_to_url_sidebar(url)
+            sidebar_label.mousePressEvent = lambda event, url=url: self.navigate_to_url_sidebar(url)
             self.sidebar_layout.addWidget(sidebar_label)
 
     # Function to navigate to the selected bookmark
