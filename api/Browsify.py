@@ -18,8 +18,23 @@ class Browsify(QMainWindow):
         self.tabs.tabCloseRequested.connect(self.close_tab)
         self.setCentralWidget(self.tabs)
 
-        # Create a new tab with the initial page
-        self.add_new_tab(QUrl("http://www.google.com"), "Home")
+        # Load default bookmarks
+        self.default_bookmarks = {}
+        try:
+            with open("db/default_bookmarks.json", 'r') as file:
+                self.default_bookmarks = json.load(file)
+        except FileNotFoundError:
+            self.default_bookmarks = {}
+
+        print(self.default_bookmarks)
+
+        if len(self.default_bookmarks) == 0:
+            # Create a new tab with the initial page
+            self.add_new_tab(QUrl("http://www.google.com"), "Home")
+        else:
+            # Open default bookmarks in new tabs
+            for url in self.default_bookmarks:
+                self.add_new_tab(QUrl(url), "Default Bookmark")
 
         # Navigation Bar
         navbar = QToolBar()
@@ -127,6 +142,9 @@ class Browsify(QMainWindow):
         self.setCentralWidget(central_widget)
         self.sidebar.hide()
 
+        # Load the state of checked checkboxes
+        self.checked_state = self.load_checked_state()
+
         # Visits
         self.visits = {}
         try:
@@ -229,10 +247,10 @@ class Browsify(QMainWindow):
 
     # Function to add URL to history
     def add_to_history(self, url):
-        # Get the current date and time
-        current_datetime = QDateTime.currentDateTime().toString(Qt.ISODate)
+        # Get the current date and time with a custom format
+        current_datetime = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
 
-        # Add the URL and the date of access to the history
+        # Add the URL and the formatted date of access to the history
         self.history[url] = current_datetime
 
         # Update the visit count for the URL
@@ -345,16 +363,48 @@ class Browsify(QMainWindow):
         # Create a new QLineEdit for the search bar
         search_bar = QLineEdit()
         search_bar.setPlaceholderText("Search Bookmarks")
-        search_bar.textChanged.connect(lambda text: self.filter_bookmarks(text))
+
+        # Sort bookmarks by name
+        sorted_bookmarks = sorted(self.bookmarks.items(), key=lambda x: x[1])
 
         bookmarks_list = QListWidget()
-        bookmarks_list.addItems(self.bookmarks.values())
+
+        # Create a mapping to store QListWidgetItem and corresponding checkbox
+        checkbox_mapping = {}
+
+        # Load the state of checked checkboxes
+        checked_state = self.load_checked_state()
+
+        def update_bookmarks_list():
+            bookmarks_list.clear()
+            for row, (url, name) in enumerate(sorted_bookmarks):
+                if search_bar.text().lower() in name.lower():
+                    checkbox = QCheckBox(name)
+                    item = QListWidgetItem(bookmarks_list)
+                    bookmarks_list.setItemWidget(item, checkbox)
+                    checkbox_mapping[row] = checkbox
+                    print(f"url: {url}")
+                    print(f"checked_state: {checked_state}")
+                    print(checked_state.get(url))
+                    checkbox.setChecked(checked_state.get(url) == "True")
+                    
+
+        update_bookmarks_list()
+
+        search_bar.textChanged.connect(update_bookmarks_list)
+
         bookmarks_list.itemClicked.connect(self.navigate_to_bookmark_from_popup)
 
         layout.addWidget(search_bar)
         layout.addWidget(bookmarks_list)
 
         popup.setLayout(layout)
+
+        # Add a button to set default bookmarks
+        set_default_button = QPushButton("Set Default")
+        set_default_button.clicked.connect(lambda: self.set_default_bookmarks(checkbox_mapping))
+        layout.addWidget(set_default_button)
+
         popup.exec_()
 
     # Function to filter the bookmarks in the search window
@@ -542,3 +592,43 @@ class Browsify(QMainWindow):
     def save_visits_to_file(self, filename='db/visits.json'):
         with open(filename, 'w') as file:
             json.dump(self.visits, file)
+
+    # Function to set default bookmarks
+    def set_default_bookmarks(self, checkbox_mapping):
+        default_bookmarks = []
+        checked_state = {}  # To store the state of checked checkboxes
+
+        # Iterate through the checkbox_mapping dictionary
+        for row, checkbox in checkbox_mapping.items():
+            if checkbox.isChecked():
+                # Get the corresponding bookmark URL from the sorted_bookmarks list
+                url = sorted(self.bookmarks.items(), key=lambda x: x[1])[row][0]
+                default_bookmarks.append(url)
+                checked_state[url] = "True"  # Mark the checkbox as checked
+
+        # Save the default bookmarks to the 'default_bookmarks.json' file
+        with open('db/default_bookmarks.json', 'w') as file:
+            json.dump(default_bookmarks, file)
+
+        # Save the state of checked checkboxes to a file
+        self.save_checked_state(checked_state)
+
+        # Show a message box indicating that bookmarks have been set as default
+        QMessageBox.information(self, 'Default Bookmarks Set', 'Default bookmarks have been set successfully.')
+
+    # Function to save default bookmarks
+    def save_default_bookmarks_to_file(self, default_bookmarks, filename='db/default_bookmarks.json'):
+        with open(filename, 'w') as file:
+            json.dump(default_bookmarks, file)
+
+    # Function to save checked bookmarks state
+    def save_checked_state(self, checked_state):
+        with open('db/checked_bookmarks.json', 'w') as file:
+            json.dump(checked_state, file)
+
+    def load_checked_state(self):
+        try:
+            with open('db/checked_bookmarks.json', 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}
