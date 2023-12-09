@@ -259,8 +259,12 @@ class Browsify(QMainWindow):
                     self.show_bookmarks()  # Update bookmarks in both combo box and sidebar
                     QMessageBox.information(self, 'Bookmark Added', f'Bookmark added: {name}')
 
-                # Save bookmarks to file
-                self.save_bookmarks_to_file()
+                    # Save bookmarks to file
+                    self.save_bookmarks_to_file()
+
+                    # Sort bookmarks by visit count in the sidebar after adding a bookmark
+                    self.sort_bookmarks_by_visits()
+
 
     def remove_bookmark(self):
         bookmark_names = list(self.bookmarks.values())
@@ -282,6 +286,9 @@ class Browsify(QMainWindow):
 
                 # Save bookmarks to file
                 self.save_bookmarks_to_file()
+
+                # Sort bookmarks by visit count in the sidebar after adding a bookmark
+                self.sort_bookmarks_by_visits()
             else:
                 QMessageBox.warning(self, 'Error', 'Bookmark not found.')
 
@@ -298,7 +305,6 @@ class Browsify(QMainWindow):
                 return url
         return ""
 
-    # Function to show bookmarks
     def show_bookmarks(self):
         # Clear existing items in both combo box and sidebar
         self.bookmarks_combo.clear()
@@ -315,9 +321,12 @@ class Browsify(QMainWindow):
         for url, name in sorted_bookmarks:
             self.bookmarks_combo.addItem(name)
             # Also add bookmarks to the sidebar
-            sidebar_label = QLabel(name)
+            sidebar_label = QLabel(f"{name} ({self.visits.get(url, 0)} visits)")
             sidebar_label.mousePressEvent = lambda event, url=url: self.navigate_to_url_sidebar(url)
             self.sidebar_layout.addWidget(sidebar_label)
+
+        # Sort bookmarks by visit count in the sidebar
+        self.sort_bookmarks_by_visits()
 
     # Function to navigate to the selected bookmark
     def navigate_to_bookmark(self, index):
@@ -412,6 +421,10 @@ class Browsify(QMainWindow):
         # Save the updated visit counts to the file
         self.save_visits_to_file()
 
+        # Update the sidebar to reflect the changes in visit counts
+        self.sort_bookmarks_by_visits()
+
+
     def save_visits_to_file(self, filename='db/visits.json'):
         with open(filename, 'w') as file:
             json.dump(self.visits, file)
@@ -428,7 +441,6 @@ class Browsify(QMainWindow):
 
         # Save the updated history to the file
         self.save_history_to_file()
-
 
     def show_history_popup(self):
         # Check if the history window is already open
@@ -488,6 +500,21 @@ class Browsify(QMainWindow):
 
         # Notify the user that the history has been cleared
         QMessageBox.information(self, 'Clear History', 'History has been cleared.')
+
+    def sort_bookmarks_by_visits(self):
+        # Sort bookmarks by visit count in descending order
+        sorted_bookmarks = sorted(self.bookmarks.items(), key=lambda x: self.visits.get(x[0], 0), reverse=True)
+
+        # Clear existing items in the sidebar
+        for i in reversed(range(self.sidebar_layout.count())):
+            self.sidebar_layout.itemAt(i).widget().setParent(None)
+
+        # Add bookmarks to the sidebar in sorted order
+        for url, name in sorted_bookmarks:
+            sidebar_label = QLabel(name)
+            sidebar_label.mousePressEvent = lambda event, url=url: self.navigate_to_url_sidebar(url)
+            self.sidebar_layout.addWidget(sidebar_label)
+
 
 
 
