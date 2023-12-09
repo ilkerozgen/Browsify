@@ -96,6 +96,7 @@ class Browsify(QMainWindow):
        # Sidebar
         self.sidebar = QWidget()
         self.sidebar_layout = QVBoxLayout()
+        self.sidebar_layout.setAlignment(Qt.AlignTop) 
         self.sidebar.setLayout(self.sidebar_layout)
 
         # Add Bookmarks Sidebar Button
@@ -107,7 +108,6 @@ class Browsify(QMainWindow):
         # Add the sidebar to the main layout
         main_layout = QHBoxLayout()
         main_layout.addWidget(self.tabs)
-
         main_layout.addWidget(self.sidebar)
 
         central_widget = QWidget()

@@ -75,6 +75,23 @@ class BrowsifyStyles:
             QLineEdit:hover {
                 border: 2px solid #2196F3;
             }
+
+            QToolBar QComboBox {
+                height: 40px;
+                font-size: 14px;
+            }
+
+            /* New styles for sidebar bookmarks */
+            QLabel {
+                margin: 5px;
+                padding: 5px;
+                border-radius: 4px;
+                background-color: transparent;
+            }
+
+            QLabel:hover {
+                background-color: #DCDCDC; /* Change the hover background color as needed */
+            }
         """
 
     def getStyles(self):
