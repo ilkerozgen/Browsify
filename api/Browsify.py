@@ -218,10 +218,16 @@ class Browsify(QMainWindow):
             self.save_bookmarks_to_file()
 
     def remove_bookmark(self):
-        current_index = self.bookmarks_combo.currentIndex()
+        bookmark_names = list(self.bookmarks.values())
 
-        if current_index >= 0 and current_index < self.bookmarks_combo.count():
-            bookmark_name = self.bookmarks_combo.itemText(current_index)
+        if not bookmark_names:
+            QMessageBox.warning(self, 'No Bookmarks', 'There are no bookmarks to remove.')
+            return
+
+        # Prompt the user to select a bookmark to remove
+        bookmark_name, ok = QInputDialog.getItem(self, 'Remove Bookmark', 'Select a bookmark to remove:', bookmark_names, 0, False)
+
+        if ok and bookmark_name:
             url = self.get_url_from_bookmark_name(bookmark_name)
 
             if url:
