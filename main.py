@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
 
 from core.Browsify import Browsify
-from controller import controller_script as control
+from controller import ControllerScript as control
 
 def main():
     app = QApplication(sys.argv)

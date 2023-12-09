@@ -6,7 +6,7 @@ from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtCore import QDateTime, Qt
 
 from frontend.Styles import BrowsifyStyles
-from controller import controller_script as control
+from controller import ControllerScript as control
 
 class Browsify(QMainWindow):
     def __init__(self):
@@ -247,6 +247,8 @@ class Browsify(QMainWindow):
 
     # Function to add URL to history
     def add_to_history(self, url):
+        if url == "http:":
+            return
         # Get the current date and time with a custom format
         current_datetime = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
 
