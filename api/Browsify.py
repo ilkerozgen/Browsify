@@ -3,6 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtCore import QDateTime, Qt
 
 from frontend.Styles import BrowsifyStyles
 
@@ -129,6 +130,18 @@ class Browsify(QMainWindow):
         bookmarks_btn.triggered.connect(self.show_bookmarks_popup)
         navbar.addAction(bookmarks_btn)
 
+        # Add this line in the __init__ method to initialize self.visits
+        self.visits = {}
+
+        # Add this block of code in the __init__ method to load visit counts
+        try:
+            with open("db/visits.json", 'r') as file:
+                self.visits = json.load(file)
+        except FileNotFoundError:
+            # Handle the case where the file is not found (e.g., first run)
+            self.visits = {}
+
+
         self.history = {}
 
         try:
@@ -212,8 +225,9 @@ class Browsify(QMainWindow):
 
         self.current_browser().setUrl(q)
 
-        # Add the visited URL to the history
+        # Add the visited URL to the history and update visit count
         self.add_to_history(q.toString())
+        self.update_visit_count(q.toString())
 
 
     # Function to save bookmarks to a JSON file
@@ -391,6 +405,17 @@ class Browsify(QMainWindow):
         with open(filename, 'w') as file:
             json.dump(self.history, file)
 
+    def update_visit_count(self, url):
+        # Increment the visit count for the URL
+        self.visits[url] = self.visits.get(url, 0) + 1
+
+        # Save the updated visit counts to the file
+        self.save_visits_to_file()
+
+    def save_visits_to_file(self, filename='db/visits.json'):
+        with open(filename, 'w') as file:
+            json.dump(self.visits, file)
+
     def add_to_history(self, url):
         # Get the current date and time
         current_datetime = QDateTime.currentDateTime().toString(Qt.ISODate)
@@ -398,8 +423,12 @@ class Browsify(QMainWindow):
         # Add the URL and the date of access to the history
         self.history[url] = current_datetime
 
+        # Update the visit count for the URL
+        self.update_visit_count(url)
+
         # Save the updated history to the file
         self.save_history_to_file()
+
 
     def show_history_popup(self):
         # Check if the history window is already open
@@ -441,11 +470,13 @@ class Browsify(QMainWindow):
             QMessageBox.information(self, 'Clear History', 'History is already empty.')
             return
 
-        # Clear the history
+        # Clear the history and visit counts
         self.history = {}
+        self.visits = {}
 
-        # Save the empty history to the file
+        # Save the empty history and visit counts to the files
         self.save_history_to_file()
+        self.save_visits_to_file()
 
         # Close the history popup if it's open
         history_popup = self.findChild(QDialog, "History")
@@ -457,6 +488,7 @@ class Browsify(QMainWindow):
 
         # Notify the user that the history has been cleared
         QMessageBox.information(self, 'Clear History', 'History has been cleared.')
+
 
 
 
