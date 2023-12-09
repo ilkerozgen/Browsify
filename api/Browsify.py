@@ -4,7 +4,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
 
-from frontend.styles import BrowsifyStyles
+from frontend.Styles import BrowsifyStyles
 
 class Browsify(QMainWindow):
     def __init__(self):
