@@ -3,13 +3,14 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
 
-from api.Browsify import Browsify
+from core.Browsify import Browsify
+from controller import controller_script as control
 
 def main():
     app = QApplication(sys.argv)
     QApplication.setApplicationName("Browsify")
     window = Browsify()
-    window.load_bookmarks_from_file()
+    control.load_bookmarks_from_file(window)
     window.show()
     sys.exit(app.exec_())
 

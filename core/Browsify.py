@@ -6,6 +6,7 @@ from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtCore import QDateTime, Qt
 
 from frontend.Styles import BrowsifyStyles
+from controller import controller_script as control
 
 class Browsify(QMainWindow):
     def __init__(self):
@@ -17,6 +18,25 @@ class Browsify(QMainWindow):
         self.tabs.setTabsClosable(True)
         self.tabs.tabCloseRequested.connect(self.close_tab)
         self.setCentralWidget(self.tabs)
+
+        # Sidebar
+        self.sidebar = QWidget()
+        self.sidebar_layout = QVBoxLayout()
+        self.sidebar_layout.setAlignment(Qt.AlignTop) 
+        self.sidebar.setLayout(self.sidebar_layout)
+
+        # Show Bookmarks ComboBox
+        self.bookmarks_combo = QComboBox()
+        self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
+
+        # Bookmarks
+        self.bookmarks = {}
+        self.bookmarks_combo.addItem('No Bookmarks Selected')
+        try:
+            with open("db/bookmarks.json", 'r') as file:
+                self.bookmarks = json.load(file)
+        except FileNotFoundError:
+            self.bookmarks = {}
 
         # Load default bookmarks
         self.default_bookmarks = {}
@@ -35,6 +55,22 @@ class Browsify(QMainWindow):
             # Open default bookmarks in new tabs
             for url in self.default_bookmarks:
                 self.add_new_tab(QUrl(url), "Default Bookmark")
+
+         # Visits
+        self.visits = {}
+        try:
+            with open("db/visits.json", 'r') as file:
+                self.visits = json.load(file)
+        except FileNotFoundError:
+            self.visits = {}
+
+        # History
+        self.history = {}
+        try:
+            with open("db/history.json", 'r') as file:
+                self.history = json.load(file)
+        except FileNotFoundError:
+            self.history = {}            
 
         # Navigation Bar
         navbar = QToolBar()
@@ -81,7 +117,7 @@ class Browsify(QMainWindow):
 
         # URL Bar
         self.url_bar = QLineEdit()
-        self.url_bar.returnPressed.connect(self.navigate_to_url)
+        self.url_bar.returnPressed.connect(self.navigate_to_url())
         navbar.addWidget(self.url_bar)
         self.url_bar.mousePressEvent = self.urlbar_mousePressEvent
         self.tabs.currentChanged.connect(self.update_urlbar_on_tab_change)
@@ -105,21 +141,11 @@ class Browsify(QMainWindow):
         remove_add_bookmark_btn.triggered.connect(self.remove_bookmark)
         navbar.addAction(remove_add_bookmark_btn)
 
-        # Show Bookmarks ComboBox
-        self.bookmarks_combo = QComboBox()
-        self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
-
         # Add History Button
         history_btn = QAction(QIcon('visual/icons/history.png'), 'Search History', self)
         history_btn.setStatusTip('View Search History')
         history_btn.triggered.connect(self.show_history_popup)
         navbar.addAction(history_btn)
-
-        # Sidebar
-        self.sidebar = QWidget()
-        self.sidebar_layout = QVBoxLayout()
-        self.sidebar_layout.setAlignment(Qt.AlignTop) 
-        self.sidebar.setLayout(self.sidebar_layout)
 
         # Add Bookmarks Sidebar Button
         toggle_sidebar_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'My Bookmarks', self)
@@ -144,31 +170,6 @@ class Browsify(QMainWindow):
 
         # Load the state of checked checkboxes
         self.checked_state = self.load_checked_state()
-
-        # Visits
-        self.visits = {}
-        try:
-            with open("db/visits.json", 'r') as file:
-                self.visits = json.load(file)
-        except FileNotFoundError:
-            self.visits = {}
-
-        # History
-        self.history = {}
-        try:
-            with open("db/history.json", 'r') as file:
-                self.history = json.load(file)
-        except FileNotFoundError:
-            self.history = {}
-
-        # Bookmarks
-        self.bookmarks = {}
-        self.bookmarks_combo.addItem('No Bookmarks Selected')
-        try:
-            with open("db/bookmarks.json", 'r') as file:
-                self.bookmarks = json.load(file)
-        except FileNotFoundError:
-            self.bookmarks = {}
 
         # Set window properties
         self.setGeometry(100, 100, 1400, 850)
@@ -240,7 +241,7 @@ class Browsify(QMainWindow):
                     QMessageBox.information(self, 'Bookmark Added', f'Bookmark added: {name}')
 
                     # Save bookmarks to file
-                    self.save_bookmarks_to_file()
+                    control.save_bookmarks_to_file(self)
 
                     # Sort bookmarks by visit count in the sidebar after adding a bookmark
                     self.sort_bookmarks_by_visits()
@@ -257,7 +258,7 @@ class Browsify(QMainWindow):
         self.update_visit_count(url)
 
         # Save the updated history to the file
-        self.save_history_to_file()
+        control.save_history_to_file(self)
 
     ########################
     ### Remove Functions ###
@@ -283,7 +284,7 @@ class Browsify(QMainWindow):
                 QMessageBox.information(self, 'Bookmark Removed', f'Bookmark removed: {bookmark_name}')
 
                 # Save bookmarks to file
-                self.save_bookmarks_to_file()
+                control.save_bookmarks_to_file(self)
 
                 # Sort bookmarks by visit count in the sidebar after adding a bookmark
                 self.sort_bookmarks_by_visits()
@@ -383,9 +384,6 @@ class Browsify(QMainWindow):
                     item = QListWidgetItem(bookmarks_list)
                     bookmarks_list.setItemWidget(item, checkbox)
                     checkbox_mapping[row] = checkbox
-                    print(f"url: {url}")
-                    print(f"checked_state: {checked_state}")
-                    print(checked_state.get(url))
                     checkbox.setChecked(checked_state.get(url) == "True")
                     
 
@@ -437,7 +435,7 @@ class Browsify(QMainWindow):
         self.visits[url] = self.visits.get(url, 0) + 1
 
         # Save the updated visit counts to the file
-        self.save_visits_to_file()
+        control.save_visits_to_file(self)
 
         # Update the sidebar to reflect the changes in visit counts
         self.sort_bookmarks_by_visits()
@@ -489,8 +487,8 @@ class Browsify(QMainWindow):
         self.visits = {}
 
         # Save the empty history and visit counts to the files
-        self.save_history_to_file()
-        self.save_visits_to_file()
+        control.save_history_to_file(self)
+        control.save_visits_to_file(self)
 
         # Close the history popup if it's open
         history_popup = self.findChild(QDialog, "History")
@@ -518,81 +516,6 @@ class Browsify(QMainWindow):
             sidebar_label.mousePressEvent = lambda event, url=url: self.navigate_to_url_sidebar(url)
             self.sidebar_layout.addWidget(sidebar_label)
 
-    ############################
-    ### Navigation Functions ###
-    ############################
-
-    # Function to navigate to home page
-    def navigate_home(self):
-        self.current_browser().setUrl(QUrl("http://www.google.com"))
-
-    # Function to navigate to URL
-    def navigate_to_url(self):
-        q = QUrl(self.url_bar.text())
-        if q.scheme() == "":
-            q.setScheme("http")
-
-        self.current_browser().setUrl(q)
-
-        self.add_to_history(q.toString())
-        self.update_visit_count(q.toString())
-
-    # Function to navigate to the selected bookmark
-    def navigate_to_bookmark(self, index):
-        bookmark_name = self.bookmarks_combo.itemText(index)
-        if bookmark_name == 'No Bookmarks Selected':
-            self.navigate_home()
-        else:
-            url = [key for key, value in self.bookmarks.items() if value == bookmark_name]
-            if url:
-                self.current_browser().setUrl(QUrl(url[0]))
-
-    # Function to navigate to URL from the sidebar
-    def navigate_to_url_sidebar(self, url):
-        q = QUrl(url)
-        if q.scheme() == "":
-            q.setScheme("http")
-
-        self.current_browser().setUrl(q)
-        self.add_to_history(url)
-
-    # Function to navigate to URL from popup window
-    def navigate_to_bookmark_from_popup(self, item):
-        bookmark_name = item.text()
-        url = self.get_url_from_bookmark_name(bookmark_name)
-        if url:
-            self.current_browser().setUrl(QUrl(url))
-            # Add the visited URL to the history
-            self.add_to_history(url)
-
-    ##########################
-    ### Database Functions ###
-    ##########################
-
-    # Function to save bookmarks
-    def save_bookmarks_to_file(self, filename='db/bookmarks.json'):
-        with open(filename, 'w') as file:
-            json.dump(self.bookmarks, file)
-
-    # Function to load bookmarks
-    def load_bookmarks_from_file(self, filename='db/bookmarks.json'):
-        try:
-            with open(filename, 'r') as file:
-                self.bookmarks = json.load(file)
-        except FileNotFoundError:
-            # Handle the case where the file is not found (e.g., first run)
-            pass
-    
-    # Function to save the history
-    def save_history_to_file(self, filename='db/history.json'):
-        with open(filename, 'w') as file:
-            json.dump(self.history, file)
-
-    # Function to save the visit counts
-    def save_visits_to_file(self, filename='db/visits.json'):
-        with open(filename, 'w') as file:
-            json.dump(self.visits, file)
-
     # Function to set default bookmarks
     def set_default_bookmarks(self, checkbox_mapping):
         default_bookmarks = []
@@ -616,10 +539,69 @@ class Browsify(QMainWindow):
         # Show a message box indicating that bookmarks have been set as default
         QMessageBox.information(self, 'Default Bookmarks Set', 'Default bookmarks have been set successfully.')
 
-    # Function to save default bookmarks
-    def save_default_bookmarks_to_file(self, default_bookmarks, filename='db/default_bookmarks.json'):
-        with open(filename, 'w') as file:
-            json.dump(default_bookmarks, file)
+    ############################
+    ### Navigation Functions ###
+    ############################
+
+    # Function to navigate to home page
+    def navigate_home(self):
+        self.current_browser().setUrl(QUrl("http://www.google.com"))
+
+    # Function to navigate to URL
+    def navigate_to_url(self):
+        q = QUrl(self.url_bar.text())
+        if q.scheme() == "":
+            q.setScheme("http")
+
+        self.current_browser().setUrl(q)
+
+        self.add_to_history(q.toString())
+        self.update_visit_count(q.toString())
+
+        return self.navigate_to_url
+
+    # Function to navigate to the selected bookmark
+    def navigate_to_bookmark(self, index):
+        bookmark_name = self.bookmarks_combo.itemText(index)
+        if bookmark_name == 'No Bookmarks Selected':
+            self.navigate_home()
+        else:
+            url = [key for key, value in self.bookmarks.items() if value == bookmark_name]
+            if url:
+                self.current_browser().setUrl(QUrl(url[0]))
+                self.add_to_history(url)
+
+    # Function to navigate to URL from the sidebar
+    def navigate_to_url_sidebar(self, url):
+        q = QUrl(url)
+        if q.scheme() == "":
+            q.setScheme("http")
+
+        self.current_browser().setUrl(q)
+        self.add_to_history(url)
+
+    # Function to navigate to URL from popup window
+    def navigate_to_bookmark_from_popup(self, item):
+        bookmark_name = item.text()
+        url = self.get_url_from_bookmark_name(bookmark_name)
+        if url:
+            self.current_browser().setUrl(QUrl(url))
+            # Add the visited URL to the history
+            self.add_to_history(url)
+
+    ##########################
+    ### Database Functions ###
+    ##########################
+
+    
+    
+    
+
+    
+
+    
+
+    
 
     # Function to save checked bookmarks state
     def save_checked_state(self, checked_state):
