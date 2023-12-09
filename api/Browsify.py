@@ -62,12 +62,6 @@ class Browsify(QMainWindow):
         new_tab_btn.triggered.connect(self.add_new_tab_action)
         navbar.addAction(new_tab_btn)
 
-        # Add Bookmarks Button to the navbar
-        bookmarks_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'Bookmarks', self)
-        bookmarks_btn.setStatusTip('Manage Bookmarks')
-        bookmarks_btn.triggered.connect(self.show_bookmarks_popup)
-        navbar.addAction(bookmarks_btn)
-
         # URL Bar
         self.url_bar = QLineEdit()
         self.url_bar.returnPressed.connect(self.navigate_to_url)
@@ -121,6 +115,12 @@ class Browsify(QMainWindow):
 
         # Initially, hide the sidebar
         self.sidebar.hide()
+
+        # Add Bookmarks Button to the navbar
+        bookmarks_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'Bookmarks', self)
+        bookmarks_btn.setStatusTip('Manage Bookmarks')
+        bookmarks_btn.triggered.connect(self.show_bookmarks_popup)
+        navbar.addAction(bookmarks_btn)
 
         # Bookmarks
         self.bookmarks = {}
