@@ -72,7 +72,7 @@ class Browsify(QMainWindow):
 
         # Navigation Bar
         navbar = QToolBar()
-        self.addToolBar(navbar)
+        self.addToolBar(Qt.BottomToolBarArea, navbar)
 
         # Set styles
         self.setStyleSheet(BrowsifyStyles().getStyles())
