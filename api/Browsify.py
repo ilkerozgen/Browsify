@@ -100,7 +100,7 @@ class Browsify(QMainWindow):
         self.sidebar.setLayout(self.sidebar_layout)
 
         # Add Bookmarks Sidebar Button
-        toggle_sidebar_btn = QAction(QIcon('visual/icons/sidebar.png'), 'Toggle Sidebar', self)
+        toggle_sidebar_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'Toggle Sidebar', self)
         toggle_sidebar_btn.setStatusTip('Toggle Bookmarks Sidebar')
         toggle_sidebar_btn.triggered.connect(self.toggle_sidebar)
         navbar.addAction(toggle_sidebar_btn)
@@ -202,7 +202,6 @@ class Browsify(QMainWindow):
             # Handle the case where the file is not found (e.g., first run)
             pass
 
-    # Function to add bookmark
     def add_bookmark(self):
         current_url = self.current_browser().url().toString()
 
@@ -212,23 +211,22 @@ class Browsify(QMainWindow):
         if ok and name:
             if current_url not in self.bookmarks:
                 self.bookmarks[current_url] = name
-                self.bookmarks_combo.addItem(name)
+                self.show_bookmarks()  # Update bookmarks in both combo box and sidebar
                 QMessageBox.information(self, 'Bookmark Added', f'Bookmark added: {name}')
 
-             # Save bookmarks to file
+            # Save bookmarks to file
             self.save_bookmarks_to_file()
 
-    # Function to remove a bookmark
     def remove_bookmark(self):
         current_index = self.bookmarks_combo.currentIndex()
 
         if current_index >= 0 and current_index < self.bookmarks_combo.count():
             bookmark_name = self.bookmarks_combo.itemText(current_index)
             url = self.get_url_from_bookmark_name(bookmark_name)
-            
+
             if url:
                 del self.bookmarks[url]
-                self.bookmarks_combo.removeItem(current_index)
+                self.show_bookmarks()  # Update bookmarks in both combo box and sidebar
                 QMessageBox.information(self, 'Bookmark Removed', f'Bookmark removed: {bookmark_name}')
 
                 # Save bookmarks to file
@@ -249,15 +247,17 @@ class Browsify(QMainWindow):
                 return url
         return ""
 
-    # Modify the show_bookmarks method
+    # Function to show bookmarks
     def show_bookmarks(self):
-        # Clear existing items
+        # Clear existing items in both combo box and sidebar
         self.bookmarks_combo.clear()
+        for i in reversed(range(self.sidebar_layout.count())):
+            self.sidebar_layout.itemAt(i).widget().setParent(None)
 
         # Add "No Bookmarks Selected" to the combo box
         self.bookmarks_combo.addItem('No Bookmarks Selected')
 
-        # Add bookmarks to the combo box
+        # Add bookmarks to the combo box and sidebar
         for name in self.bookmarks.values():
             self.bookmarks_combo.addItem(name)
             # Also add bookmarks to the sidebar
