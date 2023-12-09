@@ -1,9 +1,5 @@
 import json
 
-##########################
-### Database Functions ###
-##########################
-
 # Function to save bookmarks
 def save_bookmarks_to_file(brwsr, filename='db/bookmarks.json'):
     with open(filename, 'w') as file:
@@ -26,3 +22,16 @@ def save_history_to_file(brwsr, filename='db/history.json'):
 def save_visits_to_file(brwsr, filename='db/visits.json'):
     with open(filename, 'w') as file:
         json.dump(brwsr.visits, file)
+
+# Function to save checked bookmarks state
+def save_checked_state(checked_state):
+    with open('db/checked_bookmarks.json', 'w') as file:
+        json.dump(checked_state, file)
+
+# Function to load checked bookmarks state
+def load_checked_state():
+    try:
+        with open('db/checked_bookmarks.json', 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}

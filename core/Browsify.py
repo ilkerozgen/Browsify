@@ -46,8 +46,6 @@ class Browsify(QMainWindow):
         except FileNotFoundError:
             self.default_bookmarks = {}
 
-        print(self.default_bookmarks)
-
         if len(self.default_bookmarks) == 0:
             # Create a new tab with the initial page
             self.add_new_tab(QUrl("http://www.google.com"), "Home")
@@ -123,7 +121,7 @@ class Browsify(QMainWindow):
         self.tabs.currentChanged.connect(self.update_urlbar_on_tab_change)
 
         # Updating URL bar
-        self.current_browser().urlChanged.connect(lambda qurl: self.update_urlbar(qurl, self.current_browser()))
+        self.current_browser().urlChanged.connect(self.handleURL())
 
         # Status Bar
         status_bar = QStatusBar()
@@ -169,7 +167,7 @@ class Browsify(QMainWindow):
         self.sidebar.hide()
 
         # Load the state of checked checkboxes
-        self.checked_state = self.load_checked_state()
+        self.checked_state = control.load_checked_state()
 
         # Set window properties
         self.setGeometry(100, 100, 1400, 850)
@@ -184,7 +182,6 @@ class Browsify(QMainWindow):
     ########################
     ### Toggle Functions ###
     ########################
-
     # Function to open the sidebar
     def toggle_sidebar(self):
         if self.sidebar.isVisible():
@@ -195,7 +192,6 @@ class Browsify(QMainWindow):
     ######################
     ### Event Handlers ###
     ######################
-
     # Function to select text in the URL bar when clicked
     def urlbar_mousePressEvent(self, event):
         self.url_bar.selectAll()
@@ -204,10 +200,13 @@ class Browsify(QMainWindow):
     def add_new_tab_action(self):
         self.add_new_tab()
 
+    # Function to handle URL change
+    def handleURL(self):
+        return lambda qurl: self.update_urlbar(qurl, self.current_browser())
+
     #####################
     ### Add Functions ###
     #####################
-
     # Function to add a new tab
     def add_new_tab(self, qurl=None, label="Blank"):
         if qurl is None:
@@ -263,7 +262,6 @@ class Browsify(QMainWindow):
     ########################
     ### Remove Functions ###
     ########################
-
     # Function to remove a bookmark
     def remove_bookmark(self):
         bookmark_names = list(self.bookmarks.values())
@@ -294,7 +292,6 @@ class Browsify(QMainWindow):
     ################################
     ### Browser Utiliy Functions ###
     ################################
-
     # Function to return the current browser
     def current_browser(self):
         return self.tabs.currentWidget()
@@ -304,6 +301,7 @@ class Browsify(QMainWindow):
         if browser and browser == self.current_browser():
             self.url_bar.setText(q.toString())
             self.url_bar.setCursorPosition(0)
+            self.add_to_history(q.toString())
 
     # Function to update URL bar when the current tab changes
     def update_urlbar_on_tab_change(self, index):
@@ -374,7 +372,7 @@ class Browsify(QMainWindow):
         checkbox_mapping = {}
 
         # Load the state of checked checkboxes
-        checked_state = self.load_checked_state()
+        checked_state = control.load_checked_state()
 
         def update_bookmarks_list():
             bookmarks_list.clear()
@@ -534,7 +532,7 @@ class Browsify(QMainWindow):
             json.dump(default_bookmarks, file)
 
         # Save the state of checked checkboxes to a file
-        self.save_checked_state(checked_state)
+        control.save_checked_state(checked_state)
 
         # Show a message box indicating that bookmarks have been set as default
         QMessageBox.information(self, 'Default Bookmarks Set', 'Default bookmarks have been set successfully.')
@@ -542,7 +540,6 @@ class Browsify(QMainWindow):
     ############################
     ### Navigation Functions ###
     ############################
-
     # Function to navigate to home page
     def navigate_home(self):
         self.current_browser().setUrl(QUrl("http://www.google.com"))
@@ -588,13 +585,6 @@ class Browsify(QMainWindow):
             self.current_browser().setUrl(QUrl(url))
             # Add the visited URL to the history
             self.add_to_history(url)
-
-    ##########################
-    ### Database Functions ###
-    ##########################
-
-    
-    
     
 
     
@@ -603,14 +593,4 @@ class Browsify(QMainWindow):
 
     
 
-    # Function to save checked bookmarks state
-    def save_checked_state(self, checked_state):
-        with open('db/checked_bookmarks.json', 'w') as file:
-            json.dump(checked_state, file)
-
-    def load_checked_state(self):
-        try:
-            with open('db/checked_bookmarks.json', 'r') as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {}
+    
