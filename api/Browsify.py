@@ -93,6 +93,30 @@ class Browsify(QMainWindow):
         self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
         navbar.addWidget(self.bookmarks_combo)
 
+       # Sidebar
+        self.sidebar = QWidget()
+        self.sidebar_layout = QVBoxLayout()
+        self.sidebar.setLayout(self.sidebar_layout)
+
+        # Add Bookmarks Sidebar Button
+        toggle_sidebar_btn = QAction(QIcon('visual/icons/sidebar.png'), 'Toggle Sidebar', self)
+        toggle_sidebar_btn.setStatusTip('Toggle Bookmarks Sidebar')
+        toggle_sidebar_btn.triggered.connect(self.toggle_sidebar)
+        navbar.addAction(toggle_sidebar_btn)
+
+        # Add the sidebar to the main layout
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.tabs)
+
+        main_layout.addWidget(self.sidebar)
+
+        central_widget = QWidget()
+        central_widget.setLayout(main_layout)
+        self.setCentralWidget(central_widget)
+
+        # Initially, hide the sidebar
+        self.sidebar.hide()
+
         # Bookmarks
         self.bookmarks = {}
         self.bookmarks_combo.addItem('No Bookmarks Selected')
@@ -110,6 +134,13 @@ class Browsify(QMainWindow):
 
         # Initially, show bookmarks
         self.show_bookmarks()
+
+    # Add the toggle_sidebar method
+    def toggle_sidebar(self):
+        if self.sidebar.isVisible():
+            self.sidebar.hide()
+        else:
+            self.sidebar.show()
 
     # Function to select text in the URL bar when clicked
     def urlbar_mousePressEvent(self, event):
@@ -218,9 +249,21 @@ class Browsify(QMainWindow):
                 return url
         return ""
 
-    # Function to show bookmarks
+    # Modify the show_bookmarks method
     def show_bookmarks(self):
-        self.bookmarks_combo.addItems(self.bookmarks.values())
+        # Clear existing items
+        self.bookmarks_combo.clear()
+
+        # Add "No Bookmarks Selected" to the combo box
+        self.bookmarks_combo.addItem('No Bookmarks Selected')
+
+        # Add bookmarks to the combo box
+        for name in self.bookmarks.values():
+            self.bookmarks_combo.addItem(name)
+            # Also add bookmarks to the sidebar
+            sidebar_label = QLabel(name)
+            sidebar_label.mousePressEvent = lambda event, url=self.get_url_from_bookmark_name(name): self.navigate_to_url_sidebar(url)
+            self.sidebar_layout.addWidget(sidebar_label)
 
     # Function to navigate to the selected bookmark
     def navigate_to_bookmark(self, index):
@@ -242,3 +285,11 @@ class Browsify(QMainWindow):
     # Function to update the tab title
     def update_tab_title(self, index, title):
         self.tabs.setTabText(index, title)
+
+    # Function to navigate to specified URL from the sidebar
+    def navigate_to_url_sidebar(self, url):
+        q = QUrl(url)
+        if q.scheme() == "":
+            q.setScheme("http")
+
+        self.current_browser().setUrl(q)
