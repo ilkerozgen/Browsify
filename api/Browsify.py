@@ -92,6 +92,13 @@ class Browsify(QMainWindow):
         self.bookmarks_combo = QComboBox()
         self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
 
+        # Add History Button
+        history_btn = QAction(QIcon('visual/icons/history.png'), 'History', self)
+        history_btn.setStatusTip('View History')
+        history_btn.triggered.connect(self.show_history_popup)
+        navbar.addAction(history_btn)
+
+
         # Sidebar
         self.sidebar = QWidget()
         self.sidebar_layout = QVBoxLayout()
@@ -121,6 +128,16 @@ class Browsify(QMainWindow):
         bookmarks_btn.setStatusTip('Search Bookmarks')
         bookmarks_btn.triggered.connect(self.show_bookmarks_popup)
         navbar.addAction(bookmarks_btn)
+
+        self.history = {}
+
+        try:
+            with open("db/history.json", 'r') as file:
+                self.history = json.load(file)
+        except FileNotFoundError:
+            # Handle the case where the file is not found (e.g., first run)
+            self.history = {}
+
 
         # Bookmarks
         self.bookmarks = {}
@@ -188,13 +205,16 @@ class Browsify(QMainWindow):
     def navigate_home(self):
         self.current_browser().setUrl(QUrl("http://www.google.com"))
 
-    # Function to navigate to specified URL
     def navigate_to_url(self):
         q = QUrl(self.url_bar.text())
         if q.scheme() == "":
             q.setScheme("http")
 
         self.current_browser().setUrl(q)
+
+        # Add the visited URL to the history
+        self.add_to_history(q.toString())
+
 
     # Function to save bookmarks to a JSON file
     def save_bookmarks_to_file(self, filename='db/bookmarks.json'):
@@ -306,13 +326,14 @@ class Browsify(QMainWindow):
     def update_tab_title(self, index, title):
         self.tabs.setTabText(index, title)
 
-    # Function to navigate to specified URL from the sidebar
     def navigate_to_url_sidebar(self, url):
         q = QUrl(url)
         if q.scheme() == "":
             q.setScheme("http")
 
         self.current_browser().setUrl(q)
+        # Add the visited URL to the history
+        self.add_to_history(url)
 
     def show_bookmarks_popup(self):
         popup = QDialog(self)
@@ -363,3 +384,82 @@ class Browsify(QMainWindow):
         url = self.get_url_from_bookmark_name(bookmark_name)
         if url:
             self.current_browser().setUrl(QUrl(url))
+            # Add the visited URL to the history
+            self.add_to_history(url)
+
+    def save_history_to_file(self, filename='db/history.json'):
+        with open(filename, 'w') as file:
+            json.dump(self.history, file)
+
+    def add_to_history(self, url):
+        # Get the current date and time
+        current_datetime = QDateTime.currentDateTime().toString(Qt.ISODate)
+
+        # Add the URL and the date of access to the history
+        self.history[url] = current_datetime
+
+        # Save the updated history to the file
+        self.save_history_to_file()
+
+    def show_history_popup(self):
+        # Check if the history window is already open
+        existing_history_popup = self.findChild(QDialog, "History")
+
+        if existing_history_popup:
+            # If the history window is open, update its content
+            history_list = existing_history_popup.findChild(QListWidget)
+            if history_list:
+                history_list.clear()
+                history_list.addItems([f"{url} - {date}" for url, date in self.history.items()])
+            return
+
+        # If the history window is not open, create a new one
+        popup = QDialog(self)
+        popup.setObjectName("History")  # Set an object name to identify the window later
+        popup.setWindowTitle("History")
+        popup.setGeometry(300, 300, 400, 300)
+
+        layout = QVBoxLayout()
+
+        # Create a QListWidget for displaying the history
+        history_list = QListWidget()
+        history_list.addItems([f"{url} - {date}" for url, date in self.history.items()])
+
+        layout.addWidget(history_list)
+
+        # Add a button to clear the history
+        clear_button = QPushButton("Clear History")
+        clear_button.clicked.connect(self.clear_history)
+        layout.addWidget(clear_button)
+
+        popup.setLayout(layout)
+        popup.exec_()
+
+    def clear_history(self):
+        # Check if there are items in the history to clear
+        if not self.history:
+            QMessageBox.information(self, 'Clear History', 'History is already empty.')
+            return
+
+        # Clear the history
+        self.history = {}
+
+        # Save the empty history to the file
+        self.save_history_to_file()
+
+        # Close the history popup if it's open
+        history_popup = self.findChild(QDialog, "History")
+        if history_popup:
+            history_popup.close()
+
+        # Refresh the history window
+        self.show_history_popup()
+
+        # Notify the user that the history has been cleared
+        QMessageBox.information(self, 'Clear History', 'History has been cleared.')
+
+
+
+
+    
+        
