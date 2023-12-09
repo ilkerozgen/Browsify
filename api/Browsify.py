@@ -62,6 +62,12 @@ class Browsify(QMainWindow):
         new_tab_btn.triggered.connect(self.add_new_tab_action)
         navbar.addAction(new_tab_btn)
 
+        # Add Bookmarks Button to the navbar
+        bookmarks_btn = QAction(QIcon('visual/icons/bookmarks.png'), 'Bookmarks', self)
+        bookmarks_btn.setStatusTip('Manage Bookmarks')
+        bookmarks_btn.triggered.connect(self.show_bookmarks_popup)
+        navbar.addAction(bookmarks_btn)
+
         # URL Bar
         self.url_bar = QLineEdit()
         self.url_bar.returnPressed.connect(self.navigate_to_url)
@@ -92,7 +98,7 @@ class Browsify(QMainWindow):
         self.bookmarks_combo = QComboBox()
         self.bookmarks_combo.activated.connect(self.navigate_to_bookmark)
 
-       # Sidebar
+        # Sidebar
         self.sidebar = QWidget()
         self.sidebar_layout = QVBoxLayout()
         self.sidebar_layout.setAlignment(Qt.AlignTop) 
@@ -133,6 +139,9 @@ class Browsify(QMainWindow):
 
         # Initially, show bookmarks
         self.show_bookmarks()
+
+        # Add this line to store the original unfiltered bookmarks
+        self.original_bookmarks = self.bookmarks.copy()
 
     # Add the toggle_sidebar method
     def toggle_sidebar(self):
@@ -304,3 +313,53 @@ class Browsify(QMainWindow):
             q.setScheme("http")
 
         self.current_browser().setUrl(q)
+
+    def show_bookmarks_popup(self):
+        popup = QDialog(self)
+        popup.setWindowTitle("Bookmarks")
+        popup.setGeometry(300, 300, 400, 300)
+
+        layout = QVBoxLayout()
+
+        # Create a new QLineEdit for the search bar
+        search_bar = QLineEdit()
+        search_bar.setPlaceholderText("Search Bookmarks")
+        search_bar.textChanged.connect(lambda text: self.filter_bookmarks(text))
+
+        bookmarks_list = QListWidget()
+        bookmarks_list.addItems(self.bookmarks.values())
+        bookmarks_list.itemClicked.connect(self.navigate_to_bookmark_from_popup)
+
+        layout.addWidget(search_bar)
+        layout.addWidget(bookmarks_list)
+
+        popup.setLayout(layout)
+        popup.exec_()
+
+    def filter_bookmarks(self, text):
+        if not text:
+            # If the search bar is empty, restore the original bookmarks
+            filtered_bookmarks = self.original_bookmarks
+        else:
+            # Filter bookmarks based on the entered text
+            filtered_bookmarks = {url: name for url, name in self.original_bookmarks.items() if text.lower() in name.lower()}
+
+            # Check if the entered text matches any existing bookmark names
+            if not filtered_bookmarks:
+                # If no matches are found, add a placeholder entry
+                filtered_bookmarks[''] = f'No bookmarks found for "{text}"'
+
+        # Update the bookmarks list dynamically
+        self.update_bookmarks_list(filtered_bookmarks)
+
+    def update_bookmarks_list(self, bookmarks):
+        bookmarks_list = self.findChild(QListWidget)
+        if bookmarks_list:
+            bookmarks_list.clear()
+            bookmarks_list.addItems(bookmarks.values())
+
+    def navigate_to_bookmark_from_popup(self, item):
+        bookmark_name = item.text()
+        url = self.get_url_from_bookmark_name(bookmark_name)
+        if url:
+            self.current_browser().setUrl(QUrl(url))
